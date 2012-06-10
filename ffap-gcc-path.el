@@ -1,10 +1,10 @@
 ;;; ffap-gcc-path.el --- get gcc's include path for ffap-c-path
 
-;; Copyright 2007, 2008, 2009 Kevin Ryde
+;; Copyright 2007, 2008, 2009, 2011, 2012 Kevin Ryde
 
 ;; Author: Kevin Ryde <user42@zip.com.au>
-;; Version: 6
-;; Keywords: files
+;; Version: 7
+;; Keywords: files, ffap, C
 ;; URL: http://user42.tuxfamily.org/ffap-gcc-path/index.html
 ;; EmacsWiki: FindFileAtPoint
 
@@ -27,6 +27,9 @@
 ;; The default `ffap-c-path' is "/usr/include" and "/usr/local/include",
 ;; but gcc has a separate directory for bits it provides, like float.h.
 ;; This spot of code extracts gcc's path by parsing the output of "gcc -v".
+;;
+;; The same could be done for `PC-include-file-path' perhaps, but there's
+;; nothing for that yet.
 
 ;;; Install:
 
@@ -45,6 +48,7 @@
 ;; Version 5 - no autoload cookie, as it's a user preference really
 ;;           - fix for non-existant ffap-gcc-program executable
 ;; Version 6 - use pipe rather than pty for subprocess
+;; Version 7 - use `null-device'
 
 ;;; Code:
 
@@ -73,8 +77,16 @@ URL `http://user42.tuxfamily.org/ffap-gcc-path/index.html'"
                  (setenv "LC_ALL" nil)
                  (setenv "LC_MESSAGES" nil)
                  (condition-case err
-                     (call-process ffap-gcc-program nil t nil
-                                   "-v" "-E" "--language=c" "/dev/null")
+                     (call-process ffap-gcc-program
+                                   nil  ;; input
+                                   t    ;; output to current buffer
+                                   nil  ;; display
+                                   "-v"
+                                   "-E"
+                                   "--language=c"
+                                   (if (boundp 'null-device) ;; Emacs 20.3
+                                       null-device
+                                     "/dev/null"))
                    ;; `ret' gets message string on error
                    (error (error-message-string err))))))
       (if (not (equal 0 ret))
@@ -98,6 +110,7 @@ URL `http://user42.tuxfamily.org/ffap-gcc-path/index.html'"
 ;; do the setup now
 (ffap-gcc-path-setup)
 
+;; LocalWords: usr gcc gcc's
 
 (provide 'ffap-gcc-path)
 
